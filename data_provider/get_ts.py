@@ -8,7 +8,7 @@ from data_provider.data_scaler import get_scaler
 
 
 def get_ts(dataset, config):
-    df = pd.read_csv(f'./datasets/{dataset}/{dataset}.csv').to_numpy()
+    df = pd.read_csv(f'./datasets/{dataset}.csv').to_numpy()
     # x, y = df[:, 1:], df[:, -1]
     if config.ts_var == 1:
         x, y = df[:, 1:], df[:, 1:]

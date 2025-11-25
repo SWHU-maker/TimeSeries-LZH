@@ -1,0 +1,12 @@
+|2025-11-25 17:34:48| Dataset : weather, Model : xlstm_mixer, Density : 0.700, d_model : 256, Rank : 32, Seq_Len : 96, Pred_Len : 96
+|2025-11-25 17:34:48| MAE - 0.2261 MSE - 0.1929 RMSE - 0.4392 MAPE - 10.3861 NMAE - 0.3712 NRMSE - 0.5494 Acc_10 - 0.0496 train_time - 84.9903
+|2025-11-25 17:44:51| Dataset : weather, Model : xlstm_mixer, Density : 0.700, d_model : 256, Rank : 32, Seq_Len : 96, Pred_Len : 192
+|2025-11-25 17:44:51| MAE - 0.2710 MSE - 0.2414 RMSE - 0.4914 MAPE - 11.6194 NMAE - 0.4445 NRMSE - 0.6139 Acc_10 - 0.0384 train_time - 174.1071
+|2025-11-25 17:59:47| Dataset : weather, Model : xlstm_mixer, Density : 0.700, d_model : 256, Rank : 32, Seq_Len : 96, Pred_Len : 336
+|2025-11-25 17:59:47| MAE - 0.3275 MSE - 0.3291 RMSE - 0.5737 MAPE - 13.4572 NMAE - 0.5359 NRMSE - 0.7152 Acc_10 - 0.0307 train_time - 137.1000
+|2025-11-25 18:59:09| Dataset : weather, Model : xlstm_mixer, Density : 0.700, d_model : 256, Rank : 32, Seq_Len : 96, Pred_Len : 96
+|2025-11-25 18:59:09| MAE - 0.1996 MSE - 0.1612 RMSE - 0.4015 MAPE - 11.5660 NMAE - 0.3279 NRMSE - 0.5022 Acc_10 - 0.0595 train_time - 57.8099
+|2025-11-25 19:07:39| Dataset : weather, Model : xlstm_mixer, Density : 0.700, d_model : 256, Rank : 32, Seq_Len : 96, Pred_Len : 192
+|2025-11-25 19:07:39| MAE - 0.2485 MSE - 0.2117 RMSE - 0.4601 MAPE - 13.8828 NMAE - 0.4075 NRMSE - 0.5748 Acc_10 - 0.0436 train_time - 306.4031
+|2025-11-25 19:18:01| Dataset : weather, Model : xlstm_mixer, Density : 0.700, d_model : 256, Rank : 32, Seq_Len : 96, Pred_Len : 336
+|2025-11-25 19:18:01| MAE - 0.2910 MSE - 0.2684 RMSE - 0.5181 MAPE - 15.0040 NMAE - 0.4761 NRMSE - 0.6459 Acc_10 - 0.0349 train_time - 203.8574

@@ -9,7 +9,8 @@ pred_lens=(96 192 336 720)
 # *** 在这里添加了 SegRNNConfig 和 TIDEConfig 来与您的Python代码同步 ***
 exp_names=(
 #  "SegRNNConfig"
-  "TIDEConfig"
+  # "TIDEConfig"
+  "xLSTMMixerConfig"
 #  "ConvGRUConfig"
 #  "DecompLinearConfig"
 )

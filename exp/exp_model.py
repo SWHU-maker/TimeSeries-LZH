@@ -21,6 +21,8 @@ from modules.backbone import Backbone
 from baselines.encoder_seq import SeqEncoder
 from modules.backbone_single import SingleModel
 from modules.ts_model import TimeSeriesModel
+from baselines.xLSTMMixer import xLSTMMixerBaseline
+
 
 
 class Model(BasicModel):
@@ -56,6 +58,10 @@ class Model(BasicModel):
 
         elif config.model == 'tide':
             self.model = TIDE(config)
+
+        elif config.model == 'xlstm_mixer':
+            # ✅ 使用我们迁移的 xLSTM-Mixer baseline
+            self.model = xLSTMMixerBaseline(self.input_size, config)
 
         elif config.model == 'transformer_library':
             self.model = TransformerLibrary(config)

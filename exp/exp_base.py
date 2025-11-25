@@ -30,36 +30,6 @@ class BasicModel(torch.nn.Module):
         self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='min' if config.classification else 'max', factor=0.5,
                                                                     patience=config.patience // 1.5, threshold=0.0)
 
-    # def train_one_epoch(self, dataModule):
-    #     loss = None
-    #     self.train()
-    #     torch.set_grad_enabled(True)
-    #     t1 = time()
-
-    #     for train_batch in dataModule.train_loader:
-    #         all_item = [item.to(self.config.device) for item in train_batch]
-    #         inputs, label = all_item[:-1], all_item[-1]
-
-    #         self.optimizer.zero_grad()
-
-    #         if self.config.use_amp:
-    #             with torch.amp.autocast(device_type=self.config.device):
-    #                 pred = self.forward(*inputs)
-    #                 loss = compute_loss(self, inputs, pred, label, self.config)
-
-    #             self.scaler.scale(loss).backward()
-    #             self.scaler.step(self.optimizer)
-    #             self.scaler.update()
-    #         else:
-    #             pred = self.forward(*inputs)
-    #             loss = compute_loss(self, inputs, pred, label, self.config)
-    #             loss.backward()
-    #             self.optimizer.step()
-
-    #     t2 = time()
-    #     self.eval()
-    #     torch.set_grad_enabled(False)
-    #     return loss, t2 - t1
 
     def train_one_epoch(self, dataModule):
         last_total_loss = None
@@ -76,8 +46,7 @@ class BasicModel(torch.nn.Module):
             self.optimizer.zero_grad()
 
             if getattr(self.config, "use_amp", False):
-                # ✅ 注意：autocast 的 device_type 通常应为 'cuda' 或 'cpu'，
-                # 若 self.config.device 是 'cuda:0' 之类，需传 'cuda'
+                
                 dev_type = "cuda" if "cuda" in str(self.config.device) else "cpu"
                 with torch.amp.autocast(device_type=dev_type):
                     outputs = self.forward(*inputs)
@@ -165,41 +134,3 @@ class BasicModel(torch.nn.Module):
 
         return ErrorMetrics(reals, preds, self.config)
 
-
-    # def evaluate_one_epoch(self, dataModule, mode='valid'):
-    #     self.eval()
-    #     torch.set_grad_enabled(False)
-    #     dataloader = dataModule.valid_loader if mode == 'valid' and len(dataModule.valid_loader.dataset) != 0 else dataModule.test_loader
-    #     preds, reals, val_loss = [], [], 0.
-
-    #     context = (
-    #         torch.amp.autocast(device_type=self.config.device)
-    #         if self.config.use_amp else
-    #         contextlib.nullcontext()
-    #     )
-
-    #     with context:
-    #         for batch in dataloader:
-    #             all_item = [item.to(self.config.device) for item in batch]
-    #             inputs, label = all_item[:-1], all_item[-1]
-    #             pred = self.forward(*inputs)
-
-    #             if mode == 'valid':
-    #                 val_loss += compute_loss(self, inputs, pred, label, self.config)
-
-    #             if self.config.classification:
-    #                 pred = torch.max(pred, 1)[1]
-
-    #             reals.append(label)
-    #             preds.append(pred)
-
-    #     reals = torch.cat(reals, dim=0)
-    #     preds = torch.cat(preds, dim=0)
-
-    #     if self.config.dataset != 'weather':
-    #         reals, preds = dataModule.y_scaler.inverse_transform(reals), dataModule.y_scaler.inverse_transform(preds)
-
-    #     if mode == 'valid':
-    #         self.scheduler.step(val_loss)
-
-    #     return ErrorMetrics(reals, preds, self.config)

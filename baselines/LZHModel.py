@@ -1,7 +1,7 @@
 # LZHModel.py
 
 # coding : utf-8
-# Author : yuxiang Zeng (adapted for LZHModel by AI)
+# Author : zhenghao Luo
 import math
 import torch
 import torch.nn as nn
@@ -120,7 +120,7 @@ class DataEmbedding(nn.Module):
             x_out = self.value_embedding(x) + self.position_embedding(x) + self.temporal_embedding(x_mark)
         return self.dropout(x_out)
 
-# 🚀 LZHModel
+
 class LZHModel(nn.Module):
     def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, diffusion=False, noise_scale=1, noise_steps=100):
         super().__init__()

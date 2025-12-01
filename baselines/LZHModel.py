@@ -122,12 +122,21 @@ class DataEmbedding(nn.Module):
 
 
 class LZHModel(nn.Module):
-    def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, diffusion=False, noise_scale=1, noise_steps=100):
+    def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, diffusion=False, noise_scale=1, noise_steps=100, diff: int = 1,):
         super().__init__()
+
+    
+        print("[DEBUG] LZHModel __init__ got diff =", diff)
+        
+
         self.revin = revin
         self.seq_len = seq_len
         self.pred_len = pred_len
-        
+        self.diff=diff
+        self.use_diff = bool(diff)
+        print("[DEBUG] LZHModel __init__ got diff =", self.use_diff)
+
+
         if self.revin:
             self.revin_layer = RevIN(num_features=input_size, affine=False, subtract_last=False)
             
@@ -171,6 +180,11 @@ class LZHModel(nn.Module):
 
     def diffusion_forward(self, y):
         """执行扩散模型去噪/训练损失计算。"""
+
+        if (not self.use_diff):
+            self.diffusion_loss = 0.0
+            return y
+
         if self.diffusion is not None:
             raw_shape = y.shape
             y_flat = y.reshape(y.shape[0], -1) 

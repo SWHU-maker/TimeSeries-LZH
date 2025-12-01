@@ -80,6 +80,7 @@ class Model(BasicModel):
                 diffusion=config.diffusion,
                 noise_scale=config.noise_scale,
                 noise_steps=config.noise_steps,
+                diff=config.diff,
             )
 
         elif config.model == 'transformer':  # 添加 transformer 支持

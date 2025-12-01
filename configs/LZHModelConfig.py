@@ -40,3 +40,6 @@ class LZHModelConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInf
     noise_scale: float = 1.0
     noise_steps: int = 40
     lamda: float = 0.5  # 用于控制扩散损失的权重
+    
+
+    diff: int = 1

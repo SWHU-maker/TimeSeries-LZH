@@ -22,14 +22,14 @@ class LZHModelConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInf
     model: str = 'lzhmodel'
     
     # 模型架构配置 (与 Transformer2 相同)
-    d_model: int = 64
+    d_model: int = 128
     num_layers: int = 3
     n_heads: int = 8
     revin: bool = True
     
     # 训练配置
-    bs: int = 32
-    epochs: int = 20
+    bs: int = 96
+    epochs: int = 50
     patience: int = 3
     verbose: int = 1
     dropout: float = 0.1

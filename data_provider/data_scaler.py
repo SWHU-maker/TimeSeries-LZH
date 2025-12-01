@@ -1,5 +1,6 @@
 # coding : utf-8
 # Author : yuxiang Zeng
+# data_scaler.py
 import numpy as np
 import torch
 from sklearn.preprocessing import StandardScaler, MinMaxScaler

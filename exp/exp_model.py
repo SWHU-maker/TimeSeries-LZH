@@ -1,6 +1,7 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
 # 每次开展新实验都改一下这里
+# exp_model.py
 from baselines.CrossFormer.Crossformer import Crossformer
 from baselines.Linear import Linear
 from baselines.Linear2 import Linear2

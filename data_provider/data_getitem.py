@@ -1,5 +1,6 @@
 # coding : utf-8
 # Author : yuxiang Zeng
+# data_getitem.py
 # 根据场景需要来改这里的input形状
 from torch.utils.data import Dataset
 import numpy as np

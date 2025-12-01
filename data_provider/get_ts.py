@@ -1,7 +1,7 @@
 # coding : utf-8
 # Author : yuxiang Zeng
-# coding : utf-8
-# Author : yuxiang Zeng
+# get_ts.py
+
 import numpy as np
 import pandas as pd
 from data_provider.data_scaler import get_scaler

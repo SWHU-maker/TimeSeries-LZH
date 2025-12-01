@@ -18,3 +18,9 @@
 |2025-12-01 12:41:36| MAE - 0.2066 MSE - 0.1670 RMSE - 0.4087 MAPE - 10.9863 NMAE - 0.3393 NRMSE - 0.5112 Acc_10 - 0.0525 train_time - 30.2790
 |2025-12-01 12:44:48| Dataset : weather, Model : lzhmodel, Density : 0.700, d_model : 128, Rank : 40, Seq_Len : 96, Pred_Len : 96, Noise_Steps : 40, Noise_Scale : 1.0, Lamda : 0.5
 |2025-12-01 12:44:48| MAE - 0.2081 MSE - 0.1663 RMSE - 0.4078 MAPE - 10.5310 NMAE - 0.3417 NRMSE - 0.5102 Acc_10 - 0.0518 train_time - 29.9372
+|2025-12-01 15:28:16| Dataset : weather, Model : lzhmodel, Density : 0.700, d_model : 128, Rank : 40, Seq_Len : 96, Pred_Len : 96, Noise_Steps : 40, Noise_Scale : 1.0, Lamda : 0.5
+|2025-12-01 15:28:16| MAE - 0.2081 MSE - 0.1663 RMSE - 0.4078 MAPE - 10.5310 NMAE - 0.3417 NRMSE - 0.5102 Acc_10 - 0.0518 train_time - 30.9294
+|2025-12-01 15:53:53| Dataset : weather, Model : lzhmodel, Density : 0.700, d_model : 128, Rank : 40, Seq_Len : 96, Pred_Len : 96, Noise_Steps : 40, Noise_Scale : 1.0, Lamda : 0.5
+|2025-12-01 15:53:53| MAE - 0.2081 MSE - 0.1663 RMSE - 0.4078 MAPE - 10.5310 NMAE - 0.3417 NRMSE - 0.5102 Acc_10 - 0.0518 train_time - 29.3187
+|2025-12-01 15:57:54| Dataset : weather, Model : lzhmodel, Density : 0.700, d_model : 128, Rank : 40, Seq_Len : 96, Pred_Len : 96, Noise_Steps : 40, Noise_Scale : 1.0, Lamda : 0.5
+|2025-12-01 15:57:54| MAE - 0.2081 MSE - 0.1663 RMSE - 0.4078 MAPE - 10.5310 NMAE - 0.3417 NRMSE - 0.5102 Acc_10 - 0.0518 train_time - 29.4652

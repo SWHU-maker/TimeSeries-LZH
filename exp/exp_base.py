@@ -133,4 +133,3 @@ class BasicModel(torch.nn.Module):
             self.scheduler.step(val_loss)
 
         return ErrorMetrics(reals, preds, self.config)
-

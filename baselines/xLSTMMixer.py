@@ -1,6 +1,21 @@
 # file: baselines/xLSTMMixer.py
 # coding: utf-8
-# Author: migrated xLSTM-Mixer baseline for your framework (closer to paper)
+# Author: xLSTM-Mixer style baseline adapted to your framework
+#
+# 接口保持与你现有模板一致：
+#   - __init__(enc_in: int, config)
+#   - forward(x: [B, L, D], x_mark: [B, L, ...]) -> [B, pred_len, D]
+#
+# 结构对齐论文/官方实现的“标准 xLSTM-Mixer”思路：
+#   1) RevIN 标准化
+#   2) NLinear 在时间维做线性预测 (带最后一个点的残差技巧)
+#   3) 把预测结果视作每个变量的一条长度为 pred_len 的轨迹
+#      [B, H, D] -> [B, D, H]
+#   4) 对每个变量的轨迹用 Linear(H -> d_model) 做 embedding
+#   5) 在“变量维 D 上”跑 LSTM stack（近似 xLSTM block）
+#   6) 前向 view + 反向 view 拼接 (backcast)
+#   7) Linear(d_model*2 -> pred_len)，映射回时间维 [B, D, H]
+#   8) 还原回 [B, H, D]，RevIN 反标准化，输出 [B, pred_len, D]
 
 import torch
 from torch import nn
@@ -9,99 +24,63 @@ from einops import rearrange
 from layers.revin import RevIN
 
 
-class NLinear(nn.Module):
-    """
-    初始线性预测（Initial Linear Forecast）
-    对每个通道独立地在时间维上做线性变换：
-        x: [B, L, D] -> y: [B, H, D]
-    其中 H = pred_len
-    """
-    def __init__(self, seq_len: int, pred_len: int, channels: int):
-        super().__init__()
-        self.seq_len = seq_len
-        self.pred_len = pred_len
-        self.channels = channels
-
-        # 对时间维做线性映射：L -> H，所有通道共享同一个线性层
-        self.linear = nn.Linear(seq_len, pred_len)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x: [B, L, D]
-        x = rearrange(x, "b l d -> b d l")    # [B, D, L]
-        y = self.linear(x)                    # [B, D, H]
-        y = rearrange(y, "b d h -> b h d")    # [B, H, D]
-        return y
-
-
 class xLSTMMixerBaseline(nn.Module):
-    """
-    xLSTM-Mixer 风格的实现（简化版，用普通 LSTM 近似 xLSTM block）
-
-    输入:
-        x:      [B, seq_len, D]
-        x_mark: [B, seq_len, *]   （这里暂时不用，只保持接口）
-
-    输出:
-        y:      [B, pred_len, D]
-
-    结构对齐论文的思路：
-    1) RevIN 标准化（可选）
-    2) NLinear 做一个共享 across variates 的初始线性预测 y0
-    3) 把 y0 视为 "每个变量有一个长度为 pred_len 的未来轨迹":
-         y0: [B, H, D] -> [B, D, H]
-       对每个变量的未来轨迹做上投影 H -> d_model 得到 embedding
-    4) 在“变量维 D 上”跑 LSTM（代替原文的 xLSTM scalar memories）
-    5) 做 multi-view：正向变量顺序 + 反向变量顺序 两个 view 的输出拼接
-    6) 用线性层把两种 view 融合并映射回 [B, D, H]，再 residual 加到 y0 上
-    7) RevIN 反标准化
-    """
-
     def __init__(self, enc_in: int, config):
         """
-        enc_in: 输入通道数 D（由 DataModule / DatasetInfo 决定）
+        enc_in: 输入通道数 D
+        config: 你的统一配置对象，需要包含：
+            - seq_len : 输入长度 L
+            - pred_len: 预测长度 H
+            - d_model : 变量方向的 embedding / hidden 维度
+            - num_layers: LSTM 堆叠层数（默认 3）
+            - dropout : dropout 概率（默认 0.1）
+            - revin   : 是否使用 RevIN（默认 True）
         """
         super().__init__()
         self.config = config
 
         self.seq_len = config.seq_len       # L
         self.pred_len = config.pred_len     # H
-        self.d_model = config.d_model       # 隐藏维度（论文里通常 256）
+        self.enc_in = enc_in                # D
+        self.d_model = config.d_model       # embedding / hidden dim
         self.revin = getattr(config, "revin", True)
 
-        # ============= RevIN =============
+        # === RevIN 标准化层 ===
         if self.revin:
+            # 这里用的是你自己项目里的 RevIN 实现
             self.revin_layer = RevIN(
                 num_features=enc_in, affine=False, subtract_last=False
             )
 
-        # ============= 1) 初始线性预测（time mixing） =============
-        self.nlinear = NLinear(
-            seq_len=self.seq_len,
-            pred_len=self.pred_len,
-            channels=enc_in,
-        )
+        # === NLinear backbone（时间方向线性映射）===
+        # 对 x_enc 的「去 level」版本在线性层里做 L -> H，再加回最后一个点
+        # x: [B, L, D] -> permute -> Linear(L -> H) -> [B, H, D]
+        self.nlinear = nn.Linear(self.seq_len, self.pred_len)
 
-        # ============= 2) 上投影：每个变量的未来轨迹 H -> d_model =============
-        # y0: [B, H, D] -> [B, D, H] 之后，对最后一维 H 做线性变换
-        self.fc_up = nn.Linear(self.pred_len, self.d_model)
+        # === 变量方向 embedding：每个变量的未来轨迹 H -> d_model ===
+        # 输入： [B, D, H]  对 H 这维做线性映射
+        self.pre_encoding = nn.Linear(self.pred_len, self.d_model)
 
-        # ============= 3) 在变量维 D 上跑 LSTM（近似 xLSTM block） =============
-        self.num_layers = getattr(config, "num_layers", 3)  # 论文里多层 stack
+        # === 在变量维 D 上跑 LSTM（近似 xLSTM block）===
+        # 输入输出都是 [B, D, d_model]
+        self.num_layers = getattr(config, "num_layers", 3)
         self.lstm = nn.LSTM(
-            input_size=self.d_model,      # 每个变量的 embedding 维度
+            input_size=self.d_model,
             hidden_size=self.d_model,
             num_layers=self.num_layers,
-            batch_first=True,             # 输入形状 [B, D, d_model]
+            batch_first=True,   # 序列维度在 dim=1，这里是变量维 D
             bidirectional=False,
         )
 
-        # ============= 4) multi-view + view mixing =============
-        self.use_reverse_view = getattr(config, "use_reverse_view", True)
-        in_dim_view = self.d_model * (2 if self.use_reverse_view else 1)
+        # 是否使用 backcast（即前后两个 view）
+        self.backcast = True  # 按论文的最佳设置，直接固定为 True
 
-        # 把 multi-view 的输出映射回 “未来轨迹” 维度 H
-        # 之后会 reshape 为 [B, H, D] 与 y0 做 residual
-        self.fc_view = nn.Linear(in_dim_view, self.pred_len)
+        # backcast: concat(forward, backward)，所以维度翻倍
+        in_dim_view = self.d_model * (2 if self.backcast else 1)
+
+        # 把 multi-view 表征映射回时间维长度 H
+        # 输入 [B, D, in_dim_view] -> 输出 [B, D, H]
+        self.fc = nn.Linear(in_dim_view, self.pred_len)
 
         self.dropout = nn.Dropout(getattr(config, "dropout", 0.1))
         self.act = nn.GELU()
@@ -109,53 +88,71 @@ class xLSTMMixerBaseline(nn.Module):
     def forward(self, x: torch.Tensor, x_mark: torch.Tensor):
         """
         x:      [B, L, D]
-        x_mark: [B, L, *] 时间标记，目前不使用
+        x_mark: [B, L, *]  （这里暂时不使用，只是为了接口兼容）
+        返回:
+        y:      [B, pred_len, D]
         """
-        # ---- (1) RevIN 标准化 ----
+        # ========= 1. RevIN 标准化 =========
         if self.revin:
-            x = self.revin_layer(x, "norm")
+            x = self.revin_layer(x, "norm")   # [B, L, D]
 
-        # ---- (2) NLinear 初始线性预测: [B, L, D] -> [B, H, D] ----
-        y0 = self.nlinear(x)          # [B, pred_len, D]
+        # ========= 2. NLinear 时间方向预测 (官方做法) =========
+        # 官方代码逻辑：
+        #   seq_last = x[:, -1:, :]
+        #   x_centered = x - seq_last
+        #   x_centered -> permute to [B, D, L]
+        #   Linear(L -> H)
+        #   permute back to [B, H, D]
+        #   x_pre_forecast = x_nlinear + seq_last
+        seq_last = x[:, -1:, :].detach()          # [B, 1, D]
+        x_centered = x - seq_last                 # 去掉 level
 
-        # ---- (3) 把每个变量的未来轨迹上投影到 embedding ----
-        # y0: [B, H, D] -> [B, D, H]
-        y0_var_first = rearrange(y0, "b h d -> b d h")   # [B, D, H]
-        # 对最后一维 H 做线性映射到 d_model
-        h0 = self.fc_up(y0_var_first)                   # [B, D, d_model]
-        h0 = self.act(h0)
-        h0 = self.dropout(h0)
+        # 时间维放到最后，便于线性层处理
+        x_centered = x_centered.permute(0, 2, 1)  # [B, D, L]
+        x_nlinear = self.nlinear(x_centered)      # [B, D, H]
+        x_nlinear = x_nlinear.permute(0, 2, 1)    # [B, H, D]
 
-        # ---- (4) 在变量维 D 上跑 LSTM（joint mixing over variates）----
-        # 正向 view：变量顺序不变
-        out_fwd, _ = self.lstm(h0)                      # [B, D, d_model]
+        # 加回最后一个点，得到初始的时间方向预测
+        x_pre_forecast = x_nlinear + seq_last     # [B, H, D]
 
-        if self.use_reverse_view:
-            # 反向 view：把变量顺序翻转
-            h_rev = torch.flip(h0, dims=[1])            # [B, D, d_model]
-            out_rev, _ = self.lstm(h_rev)               # [B, D, d_model]
-            out_rev = torch.flip(out_rev, dims=[1])     # 再翻回来 [B, D, d_model]
+        # ========= 3. 变量维视角 + embedding =========
+        # 我们把每个变量看作一条长度为 H 的序列：
+        # [B, H, D] -> [B, D, H]
+        var_seq = x_pre_forecast.permute(0, 2, 1)   # [B, D, H]
 
-            h_cat = torch.cat([out_fwd, out_rev], dim=-1)   # [B, D, 2*d_model]
+        # 对「时间维 H」做线性映射到 d_model，得到变量 embedding
+        h = self.pre_encoding(var_seq)              # [B, D, d_model]
+        h = self.act(h)
+        h = self.dropout(h)
+
+        # ========= 4. 在变量维 D 上跑 LSTM（joint mixing over variates）=========
+        # 正向 view
+        out_fwd, _ = self.lstm(h)                   # [B, D, d_model]
+
+        if self.backcast:
+            # 反向 view：变量顺序翻转
+            h_rev = torch.flip(h, dims=[1])         # [B, D, d_model]
+            out_bwd, _ = self.lstm(h_rev)           # [B, D, d_model]
+            out_bwd = torch.flip(out_bwd, dims=[1]) # 再翻回来
+
+            h_cat = torch.cat([out_fwd, out_bwd], dim=-1)  # [B, D, 2*d_model]
         else:
-            h_cat = out_fwd                              # [B, D, d_model]
+            h_cat = out_fwd                                  # [B, D, d_model]
 
         h_cat = self.act(h_cat)
         h_cat = self.dropout(h_cat)
 
-        # ---- (5) view mixing + 映射回未来轨迹维度 H ----
-        # [B, D, *] -> [B, D, H]
-        y_delta = self.fc_view(h_cat)                   # [B, D, H]
+        # ========= 5. 映射回时间维 H =========
+        # [B, D, in_dim_view] -> [B, D, H]
+        x_out = self.fc(h_cat)                     # [B, D, H]
 
-        # [B, D, H] -> [B, H, D]，方便与 y0 对齐
-        y_delta = rearrange(y_delta, "b d h -> b h d")  # [B, H, D]
+        # 再还原成 [B, H, D]
+        x_out = x_out.permute(0, 2, 1)             # [B, H, D]
 
-        # ---- (6) residual refine：在初始线性预测 y0 的基础上加一个残差 ----
-        y = y0 + y_delta                                # [B, H, D]
-
-        # ---- (7) RevIN 反标准化 ----
+        # ========= 6. RevIN 反标准化 =========
         if self.revin:
-            y = self.revin_layer(y, "denorm")
+            x_out = self.revin_layer(x_out, "denorm")
 
-        # 最终输出 shape: [B, pred_len, D]
-        return y
+        # ========= 7. 输出 =========
+        # shape: [B, pred_len, D]
+        return x_out

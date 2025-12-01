@@ -30,4 +30,7 @@ def compute_loss(model, inputs, pred, label, config):
     #     loss = loss  + config.lamda * model.model.diffusion_loss
     if getattr(config, 'model', None) == 'transformer2':
         loss = loss + config.lamda * model.model.diffusion_loss
+    
+    if getattr(config, 'model', None) == 'lzhmodel':
+        loss = loss + config.lamda * model.model.diffusion_loss
     return loss

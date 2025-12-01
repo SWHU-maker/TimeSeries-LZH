@@ -22,6 +22,7 @@ from baselines.encoder_seq import SeqEncoder
 from modules.backbone_single import SingleModel
 from modules.ts_model import TimeSeriesModel
 from baselines.xLSTMMixer import xLSTMMixerBaseline
+from baselines.LZHModel import LZHModel
 
 
 
@@ -65,6 +66,20 @@ class Model(BasicModel):
 
         elif config.model == 'transformer_library':
             self.model = TransformerLibrary(config)
+        
+        elif config.model == 'lzhmodel':
+            self.model = LZHModel(
+                input_size=config.input_size,
+                d_model=config.d_model,
+                revin=config.revin,
+                num_heads=config.n_heads,
+                num_layers=config.num_layers,
+                seq_len=config.seq_len,
+                pred_len=config.pred_len,
+                diffusion=config.diffusion,
+                noise_scale=config.noise_scale,
+                noise_steps=config.noise_steps,
+            )
 
         elif config.model == 'transformer':  # 添加 transformer 支持
             self.model = Transformer(

@@ -24,6 +24,8 @@ from modules.backbone_single import SingleModel
 from modules.ts_model import TimeSeriesModel
 from baselines.xLSTMMixer import xLSTMMixerBaseline
 from baselines.LZHModel import LZHModel
+from baselines.TimeMixer import TimeMixer
+
 
 
 
@@ -61,9 +63,10 @@ class Model(BasicModel):
         elif config.model == 'tide':
             self.model = TIDE(config)
 
-        elif config.model == 'xlstm_mixer':
-            # ✅ 使用我们迁移的 xLSTM-Mixer baseline
-            self.model = xLSTMMixerBaseline(self.input_size, config)
+        elif config.model == 'timemixer':
+            self.model = TimeMixer(
+                    input_size=config.input_size,
+                    config=config)
 
         elif config.model == 'transformer_library':
             self.model = TransformerLibrary(config)
@@ -82,6 +85,8 @@ class Model(BasicModel):
                 noise_steps=config.noise_steps,
                 diff=config.diff,
             )
+
+
 
         elif config.model == 'transformer':  # 添加 transformer 支持
             self.model = Transformer(

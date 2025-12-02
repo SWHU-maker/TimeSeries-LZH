@@ -21,7 +21,7 @@ def get_experiment_name(config):
         'Density': f"{config.density:.3f}",
         'd_model': config.d_model,
         'Rank': config.rank,
-        'diff': config.diff
+        # 'diff': config.diff
     }
 
     # === 动态添加字段（只有在 config 中存在才加入）===

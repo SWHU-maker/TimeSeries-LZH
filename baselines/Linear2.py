@@ -1,5 +1,6 @@
 # coding : utf-8
 # Author : Yuxiang Zeng
+# Linear2.py
 import torch
 from layers.revin import RevIN
 from einops import rearrange

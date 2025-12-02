@@ -15,7 +15,8 @@ pred_lens=(
 exp_names=(
 #  "SegRNNConfig"
   # "TIDEConfig"
-  "LZHModelConfig"
+  # "LZHModelConfig"
+  "TimeMixerConfig"
 #  "ConvGRUConfig"
 #  "DecompLinearConfig"
 )

@@ -15,8 +15,8 @@ pred_lens=(
 exp_names=(
 #  "SegRNNConfig"
   # "TIDEConfig"
-  # "LZHModelConfig"
-  "TimeMixerConfig"
+  "LZHModelConfig"
+  # "TimeMixerConfig"
 #  "ConvGRUConfig"
 #  "DecompLinearConfig"
 )
@@ -31,7 +31,7 @@ do
     echo "========================================================"
 
     # 执行Python实验脚本
-    python run_train.py --exp_name "$exp" --pred_len "$len" --logger "lzh" --rounds 1
+    python run_train.py --exp_name "$exp" --pred_len "$len" --logger "lzh" 
     
     echo "Finished one run. Moving to the next..."
     echo ""

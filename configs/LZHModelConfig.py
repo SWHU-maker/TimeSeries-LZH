@@ -29,7 +29,7 @@ class LZHModelConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInf
     
     # 训练配置
     bs: int = 96
-    epochs: int = 50
+    epochs: int = 20
     patience: int = 3
     verbose: int = 1
     dropout: float = 0.1
@@ -43,3 +43,4 @@ class LZHModelConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInf
     
 
     diff: int = 1
+    rounds:int = 1

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VSCode 测试页面</title>
+    <style>
+        /* CSS 样式部分 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            transition: color 0.3s ease;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+        }
+
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .primary-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .primary-btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .secondary-btn {
+            background: #764ba2;
+            color: white;
+        }
+
+        .secondary-btn:hover {
+            background: #6a4190;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4);
+        }
+
+        .danger-btn {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .danger-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        #message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .info-message {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .counter-display {
+            font-size: 3em;
+            color: #667eea;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .color-box {
+            width: 100px;
+            height: 100px;
+            margin: 20px auto;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .interactive-list {
+            text-align: left;
+            margin: 20px 0;
+        }
+
+        .interactive-list li {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f1f3f4;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .interactive-list li:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .bounce {
+            animation: bounce 1s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="main-title">VSCode 测试页面</h1>
+        <p class="subtitle">测试你的VSCode是否能正常打开和运行HTML文件</p>
+
+        <div class="test-section">
+            <h3>🎨 样式测试</h3>
+            <p>这个部分测试CSS样式是否正确加载</p>
+            <div class="color-box" id="colorBox"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 交互测试</h3>
+            <p>点击按钮测试JavaScript功能</p>
+            
+            <div class="button-group">
+                <button class="primary-btn" onclick="showMessage()">显示消息</button>
+                <button class="secondary-btn" onclick="changeTitle()">改变标题</button>
+                <button class="danger-btn" onclick="resetPage()">重置页面</button>
+            </div>
+
+            <div class="button-group">
+                <button class="primary-btn" onclick="startCounter()">开始计数</button>
+                <button class="secondary-btn" onclick="stopCounter()">停止计数</button>
+                <button class="danger-btn" onclick="resetCounter()">重置计数</button>
+            </div>
+
+            <div class="counter-display" id="counter">0</div>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 列表交互</h3>
+            <p>点击列表项测试交互效果</p>
+            <ul class="interactive-list" id="interactiveList">
+                <li onclick="selectItem(this)">项目 1 - 点击我</li>
+                <li onclick="selectItem(this)">项目 2 - 点击我</li>
+                <li onclick="selectItem(this)">项目 3 - 点击我</li>
+                <li onclick="selectItem(this)">项目 4 - 点击我</li>
+            </ul>
+        </div>
+
+        <div id="message" class="hidden"></div>
+
+        <div class="test-section">
+            <h3>🔧 文件信息</h3>
+            <p>页面加载时间: <span id="loadTime"></span></p>
+            <p>当前时间: <span id="currentTime"></span></p>
+            <p>浏览器信息: <span id="browserInfo"></span></p>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript 功能部分
+        let counter = 0;
+        let counterInterval = null;
+        let originalTitle = document.getElementById('main-title').textContent;
+
+        // 页面加载完成后执行
+        window.addEventListener('load', function() {
+            console.log('页面加载完成！');
+            document.getElementById('loadTime').textContent = new Date().toLocaleTimeString();
+            updateCurrentTime();
+            detectBrowser();
+            
+            // 每秒更新时间
+            setInterval(updateCurrentTime, 1000);
+            
+            // 初始化颜色框
+            const colorBox = document.getElementById('colorBox');
+            colorBox.style.backgroundColor = '#667eea';
+            colorBox.addEventListener('click', function() {
+                const colors = ['#667eea', '#764ba2', '#e74c3c', '#3498db', '#2ecc71', '#f39c12'];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                this.style.backgroundColor = randomColor;
+                this.classList.add('bounce');
+                setTimeout(() => this.classList.remove('bounce'), 1000);
+            });
+        });
+
+        // 显示消息功能
+        function showMessage() {
+            const messageDiv = document.getElementById('message');
+            const messages = [
+                'VSCode 运行正常！🎉',
+                'HTML 文件加载成功！✅',
+                'CSS 样式应用成功！🎨',
+                'JavaScript 功能正常！⚡',
+                '这是一个完整的测试页面！🌟'
+            ];
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            
+            messageDiv.textContent = randomMessage;
+            messageDiv.className = 'info-message';
+            messageDiv.style.opacity = '1';
+            
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+            }, 3000);
+        }
+
+        // 改变标题功能
+        function changeTitle() {
+            const title = document.getElementById('main-title');
+            const titles = [
+                'VSCode 测试页面',
+                'HTML/CSS/JS 测试',
+                '功能正常！',
+                '🎉 测试成功！',
+                '✨ VSCode 很棒！'
+            ];
+            const randomTitle = titles[Math.floor(Math.random() * titles.length)];
+            title.textContent = randomTitle;
+            title.classList.add('bounce');
+            setTimeout(() => title.classList.remove('bounce'), 1000);
+        }
+
+        // 重置页面功能
+        function resetPage() {
+            document.getElementById('main-title').textContent = originalTitle;
+            document.getElementById('message').style.opacity = '0';
+            resetCounter();
+            
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = '页面已重置！';
+            messageDiv.className = 'success-message';
+            messageDiv.style.opacity = '1';
+            
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+            }, 2000);
+        }
+
+        // 计数器功能
+        function startCounter() {
+            if (counterInterval === null) {
+                counterInterval = setInterval(() => {
+                    counter++;
+                    document.getElementById('counter').textContent = counter;
+                }, 1000);
+                showTempMessage('计数器已开始！', 'success-message');
+            }
+        }
+
+        function stopCounter() {
+            if (counterInterval !== null) {
+                clearInterval(counterInterval);
+                counterInterval = null;
+                showTempMessage('计数器已停止！', 'info-message');
+            }
+        }
+
+        function resetCounter() {
+            stopCounter();
+            counter = 0;
+            document.getElementById('counter').textContent = counter;
+            showTempMessage('计数器已重置！', 'success-message');
+        }
+
+        // 列表项选择功能
+        function selectItem(item) {
+            // 移除其他项的选中状态
+            document.querySelectorAll('.interactive-list li').forEach(li => {
+                li.style.backgroundColor = '#f1f3f4';
+                li.style.color = '#333';
+                li.style.transform = 'translateX(0)';
+            });
+            
+            // 设置当前项为选中状态
+            item.style.backgroundColor = '#667eea';
+            item.style.color = 'white';
+            item.style.transform = 'translateX(10px)';
+            
+            showTempMessage(`你选择了: ${item.textContent}`, 'info-message');
+        }
+
+        // 显示临时消息
+        function showTempMessage(text, className) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = className;
+            messageDiv.style.opacity = '1';
+            
+            setTimeout(() => {
+                messageDiv.style.opacity = '0';
+            }, 2000);
+        }
+
+        // 更新当前时间
+        function updateCurrentTime() {
+            document.getElementById('currentTime').textContent = new Date().toLocaleTimeString();
+        }
+
+        // 检测浏览器信息
+        function detectBrowser() {
+            const userAgent = navigator.userAgent;
+            let browserName = '未知浏览器';
+            
+            if (userAgent.indexOf('Chrome') > -1) {
+                browserName = 'Google Chrome';
+            } else if (userAgent.indexOf('Firefox') > -1) {
+                browserName = 'Mozilla Firefox';
+            } else if (userAgent.indexOf('Safari') > -1) {
+                browserName = 'Apple Safari';
+            } else if (userAgent.indexOf('Edge') > -1) {
+                browserName = 'Microsoft Edge';
+            }
+            
+            document.getElementById('browserInfo').textContent = browserName;
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'r') {
+                event.preventDefault();
+                resetPage();
+            } else if (event.ctrlKey && event.key === 'm') {
+                event.preventDefault();
+                showMessage();
+            }
+        });
+
+        // 控制台输出测试信息
+        console.log('=== VSCode HTML测试文件 ===');
+        console.log('✅ HTML结构加载完成');
+        console.log('✅ CSS样式加载完成');
+        console.log('✅ JavaScript功能初始化完成');
+        console.log('📋 测试说明：');
+        console.log('   - 点击按钮测试交互功能');
+        console.log('   - 点击彩色方框改变颜色');
+        console.log('   - 点击列表项测试选择功能');
+        console.log('   - 使用 Ctrl+R 重置页面');
+        console.log('   - 使用 Ctrl+M 显示消息');
+        console.log('==========================');
+    </script>
+</body>
+</html>

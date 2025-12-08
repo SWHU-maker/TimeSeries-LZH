@@ -14,8 +14,8 @@ from layers.revin import RevIN
 from einops import rearrange
 import layers.diffusion.gaussian_diffusion as gd
 from layers.diffusion.DNN import DNN
-from utils.delete import plot_and_save
-from utils.visualize import plot_and_save
+from utils.delete import delete_small_log_files
+from utils.visualize import  plot_and_save
 
 
 

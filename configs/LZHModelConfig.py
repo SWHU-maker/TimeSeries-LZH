@@ -21,7 +21,7 @@ class LZHModelConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInf
     # 核心配置
     model: str = 'lzhmodel'
     
-    # 模型架构配置 (与 Transformer2 相同)
+    # 模型架构配置
     d_model: int = 128
     num_layers: int = 3
     n_heads: int = 8
@@ -36,11 +36,14 @@ class LZHModelConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInf
     amp: bool = False
     
     # 扩散模型配置
-    diffusion: bool = True
+    # use_diff=0: 不创建也不使用扩散模型，forward 直接返回原输入
+    # use_diff=1: 创建并使用扩散模型
+    #   - 如果提供了 diffusion_ckpt: 加载预训练模型并冻结参数，仅用于推理
+    #   - 如果没有 diffusion_ckpt: 初始化新模型，跟随训练
+    use_diff: int = 1
     noise_scale: float = 1.0
     noise_steps: int = 40
     lamda: float = 0.5  # 用于控制扩散损失的权重
+    diffusion_ckpt = "checkpoints/diffusion_lzh/diffusion_lzh.pt"
     
-
-    diff: int = 1
-    rounds:int = 1
+    rounds: int = 3

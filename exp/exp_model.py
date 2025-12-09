@@ -80,10 +80,10 @@ class Model(BasicModel):
                 num_layers=config.num_layers,
                 seq_len=config.seq_len,
                 pred_len=config.pred_len,
-                diffusion=config.diffusion,
+                use_diff=getattr(config, "use_diff", 0),
                 noise_scale=config.noise_scale,
                 noise_steps=config.noise_steps,
-                diff=config.diff,
+                diffusion_ckpt=getattr(config, "diffusion_ckpt", None) or None,
             )
 
 

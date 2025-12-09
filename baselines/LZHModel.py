@@ -125,20 +125,13 @@ class DataEmbedding(nn.Module):
 
 
 class LZHModel(nn.Module):
-    def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, diffusion=False, noise_scale=1, noise_steps=100, diff: int = 1,):
+    def __init__(self, input_size, d_model, revin, num_heads, num_layers, seq_len, pred_len, use_diff: int = 0, noise_scale=1, noise_steps=100, diffusion_ckpt: str = None):
         super().__init__()
-
-    
-        print("[DEBUG] LZHModel __init__ got diff =", diff)
-        
 
         self.revin = revin
         self.seq_len = seq_len
         self.pred_len = pred_len
-        self.diff=diff
-        self.use_diff = bool(diff)
-        print("[DEBUG] LZHModel __init__ got diff =", self.use_diff)
-
+        self.use_diff = bool(use_diff)  # use_diff=0: 不创建也不使用, use_diff=1: 创建并使用
 
         if self.revin:
             self.revin_layer = RevIN(num_features=input_size, affine=False, subtract_last=False)
@@ -163,44 +156,132 @@ class LZHModel(nn.Module):
         self.projection = nn.Linear(d_model, input_size)
         self.diffusion_loss = 0
         
-        if diffusion:
-            device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-            self.diffusion = gd.GaussianDiffusion(
-                mean_type=gd.ModelMeanType.EPSILON,
-                noise_schedule='linear-var',
-                noise_scale=noise_scale,
-                noise_min=0.0001,
-                noise_max=0.02,
-                steps=noise_steps,
-                device=device
-            )
-            self.reverse = DNN(in_dims=[input_size * seq_len, input_size * seq_len], 
-                               out_dims=[input_size * seq_len, input_size * seq_len], 
-                               emb_size=d_model).to(device)
+        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        self.use_pretrained_diffusion = False  # 标记是否使用了预训练扩散模型
+        self._diffusion_forward_called = False  # 标记是否已经调用过 diffusion_forward
+        
+        # use_diff=0: 不创建也不使用
+        # use_diff=1: 创建并使用（如果有 diffusion_ckpt 则加载预训练并冻结，否则初始化跟随训练）
+        if self.use_diff:
+            if diffusion_ckpt:
+                self._load_diffusion_from_ckpt(diffusion_ckpt, input_size, seq_len, d_model, noise_scale, noise_steps)
+                self.use_pretrained_diffusion = True
+            else:
+                self._init_diffusion(input_size, seq_len, d_model, noise_scale, noise_steps)
+                print(f"[INFO] 扩散模型已初始化，将跟随训练 | noise_scale={noise_scale}, noise_steps={noise_steps}")
         else:
             self.diffusion = None
             self.reverse = None
+            print("[INFO] 扩散模型未启用 (use_diff=0)")
+        
+        # 打印模型配置摘要
+        print("=" * 80)
+        print("[LZHModel 配置摘要]")
+        print(f"  use_diff: {self.use_diff}")
+        print(f"  use_pretrained_diffusion: {self.use_pretrained_diffusion}")
+        if self.use_diff:
+            print(f"  扩散模型状态: {'预训练模型（已冻结）' if self.use_pretrained_diffusion else '新模型（跟随训练）'}")
+            if diffusion_ckpt:
+                print(f"  预训练路径: {diffusion_ckpt}")
+        print(f"  device: {self.device}")
+        print(f"  input_size: {input_size}, seq_len: {seq_len}, pred_len: {pred_len}")
+        print(f"  d_model: {d_model}, num_layers: {num_layers}, num_heads: {num_heads}")
+        print("=" * 80)
+
+    def _init_diffusion(self, input_size, seq_len, d_model, noise_scale, noise_steps):
+        self.diffusion = gd.GaussianDiffusion(
+            mean_type=gd.ModelMeanType.EPSILON,
+            noise_schedule='linear-var',
+            noise_scale=noise_scale,
+            noise_min=0.0001,
+            noise_max=0.02,
+            steps=noise_steps,
+            device=self.device
+        )
+        self.reverse = DNN(in_dims=[input_size * seq_len, input_size * seq_len],
+                           out_dims=[input_size * seq_len, input_size * seq_len],
+                           emb_size=d_model).to(self.device)
+
+    def _load_diffusion_from_ckpt(self, ckpt_path, input_size, seq_len, d_model, default_noise_scale, default_noise_steps):
+        state = torch.load(ckpt_path, map_location=self.device)
+        params = state.get("diffusion_params", {})
+        noise_scale = params.get("noise_scale", default_noise_scale)
+        noise_min = params.get("noise_min", 0.0001)
+        noise_max = params.get("noise_max", 0.02)
+        steps = params.get("steps", default_noise_steps)
+        schedule = params.get("noise_schedule", "linear-var")
+        mean_type = params.get("mean_type", "EPSILON")
+        self.diffusion = gd.GaussianDiffusion(
+            mean_type=getattr(gd.ModelMeanType, mean_type),
+            noise_schedule=schedule,
+            noise_scale=noise_scale,
+            noise_min=noise_min,
+            noise_max=noise_max,
+            steps=steps,
+            device=self.device
+        )
+        self.reverse = DNN(in_dims=[input_size * seq_len, input_size * seq_len],
+                           out_dims=[input_size * seq_len, input_size * seq_len],
+                           emb_size=state.get("d_model", d_model)).to(self.device)
+        if "reverse_state_dict" in state:
+            self.reverse.load_state_dict(state["reverse_state_dict"])
+            # 冻结预训练扩散模型的参数，不继续训练
+            for param in self.reverse.parameters():
+                param.requires_grad = False
+            self.reverse.eval()  # 设置为评估模式
+            print(
+                f"[INFO] Loaded pretrained diffusion ckpt: {ckpt_path} | "
+                f"mean_type={mean_type}, schedule={schedule}, steps={steps}, "
+                f"noise_scale={noise_scale}, noise_min={noise_min}, noise_max={noise_max} | "
+                f"扩散模型参数已冻结，仅用于推理"
+            )
+        else:
+            raise ValueError(f"未在 {ckpt_path} 找到 reverse_state_dict")
 
     def diffusion_forward(self, y):
         """执行扩散模型去噪/训练损失计算。"""
-
-        if (not self.use_diff):
+        # use_diff=0: 直接返回原输入，不进行任何处理
+        if not self.use_diff:
             self.diffusion_loss = 0.0
             return y
 
-        if self.diffusion is not None:
-            raw_shape = y.shape
-            y_flat = y.reshape(y.shape[0], -1) 
-            
-            if self.training:
-                diff_output = self.diffusion.training_losses(self.reverse, y_flat, True)
-                y_denoised = diff_output["pred_xstart"]
-                self.diffusion_loss = diff_output["loss"].mean()
-            else:
+        # use_diff=1: 使用扩散模型进行去噪（此时 self.diffusion 一定不为 None）
+        raw_shape = y.shape
+        y_flat = y.reshape(y.shape[0], -1) 
+        
+        # 首次调用时打印状态信息
+        if not self._diffusion_forward_called:
+            self._diffusion_forward_called = True
+            print("[INFO] diffusion_forward 首次调用")
+            print(f"  训练模式 (self.training): {self.training}")
+            print(f"  使用预训练扩散模型 (use_pretrained_diffusion): {self.use_pretrained_diffusion}")
+            print(f"  输入形状: {y.shape}")
+        
+        # 如果使用了预训练模型，直接进行去噪，不计算训练损失
+        if self.use_pretrained_diffusion:
+            with torch.no_grad():
                 y_denoised = self.diffusion.p_sample(self.reverse, y_flat, 5, False)
-                self.diffusion_loss = 0.0
-                
-            y = y_denoised.reshape(raw_shape)
+            self.diffusion_loss = 0.0
+            if not hasattr(self, '_print_pretrained_info'):
+                print(f"  [扩散模型] 使用预训练模型进行去噪（参数已冻结，仅推理）")
+                self._print_pretrained_info = True
+        elif self.training:
+            # 未使用预训练模型时，正常计算训练损失
+            diff_output = self.diffusion.training_losses(self.reverse, y_flat, True)
+            y_denoised = diff_output["pred_xstart"]
+            self.diffusion_loss = diff_output["loss"].mean()
+            if not hasattr(self, '_print_training_info'):
+                print(f"  [扩散模型] 训练模式：计算扩散损失（新模型跟随训练）")
+                self._print_training_info = True
+        else:
+            # 推理模式
+            y_denoised = self.diffusion.p_sample(self.reverse, y_flat, 5, False)
+            self.diffusion_loss = 0.0
+            if not hasattr(self, '_print_eval_info'):
+                print(f"  [扩散模型] 推理模式：使用扩散模型进行去噪（新模型）")
+                self._print_eval_info = True
+            
+        y = y_denoised.reshape(raw_shape)
         return y
     
     def forward(self, x, x_mark=None, timesteps=None):

@@ -58,3 +58,13 @@
 |2025-12-08 20:29:59| MAE - 0.2081 MSE - 0.1663 RMSE - 0.4078 MAPE - 10.5310 NMAE - 0.3417 NRMSE - 0.5102 Acc_10 - 0.0518 train_time - 29.8643
 |2025-12-08 20:38:02| Dataset : weather, Model : lzhmodel, Density : 0.700, d_model : 128, Rank : 40, Seq_Len : 96, Pred_Len : 96, Noise_Steps : 40, Noise_Scale : 1.0, Lamda : 0.5
 |2025-12-08 20:38:02| MAE - 0.2098 MSE - 0.1694 RMSE - 0.4116 MAPE - 10.7877 NMAE - 0.3445 NRMSE - 0.5148 Acc_10 - 0.0519 train_time - 29.8489
+|2025-12-09 15:03:44| Dataset : weather, Model : lzhmodel, Density : 0.700, d_model : 128, Rank : 40, Seq_Len : 96, Pred_Len : 96, Noise_Steps : 40, Noise_Scale : 1.0, Lamda : 0.5
+|2025-12-09 15:03:44| MAE - 0.2094 MSE - 0.1698 RMSE - 0.4121 MAPE - 11.5959 NMAE - 0.3438 NRMSE - 0.5155 Acc_10 - 0.0514 train_time - 49.6730
+|2025-12-10 14:55:25| Dataset : weather, Model : lzhmodel, Density : 0.700, d_model : 128, Rank : 40, Seq_Len : 96, Pred_Len : 96, Noise_Steps : 40, Noise_Scale : 1.0, Lamda : 0.5
+|2025-12-10 14:55:25| MAE - 0.2094 MSE - 0.1698 RMSE - 0.4121 MAPE - 11.5959 NMAE - 0.3438 NRMSE - 0.5155 Acc_10 - 0.0514 train_time - 41.2549
+|2025-12-10 16:07:22| Dataset : weather, Model : lzhmodel, Density : 0.700, d_model : 128, Rank : 40, Seq_Len : 96, Pred_Len : 96, Noise_Steps : 40, Noise_Scale : 1.0, Lamda : 0.5
+|2025-12-10 16:07:22| MAE - 0.2098 MSE - 0.1701 RMSE - 0.4124 MAPE - 11.3328 NMAE - 0.3446 NRMSE - 0.5159 Acc_10 - 0.0508 train_time - 46.9904
+|2025-12-10 20:00:43| Dataset : weather, Model : lzhmodel, Density : 0.700, d_model : 128, Rank : 40, Seq_Len : 96, Pred_Len : 96, Noise_Steps : 40, Noise_Scale : 1.0, Lamda : 0.5
+|2025-12-10 20:00:43| MAE - 0.2098 MSE - 0.1701 RMSE - 0.4124 MAPE - 11.3328 NMAE - 0.3446 NRMSE - 0.5159 Acc_10 - 0.0508 train_time - 144.6147
+|2025-12-23 10:24:21| Dataset : weather, Model : lzhmodel, Density : 0.700, d_model : 128, Rank : 40, Seq_Len : 96, Pred_Len : 96, Noise_Steps : 40, Noise_Scale : 1.0, Lamda : 0.5
+|2025-12-23 10:24:21| MAE - 0.2087 MSE - 0.1699 RMSE - 0.4122 MAPE - 10.5902 NMAE - 0.3427 NRMSE - 0.5156 Acc_10 - 0.0523 train_time - 25.9769

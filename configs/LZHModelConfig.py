@@ -13,10 +13,9 @@ from dataclasses import dataclass
 
 @dataclass
 class LZHModelConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInfo, TrainingConfig, OtherConfig):
-    # --- 框架运行所需的必要属性 (从基类或默认设置中补齐) ---
-    debug: bool = False             # 解决 'AttributeError: ... has no attribute 'debug''
-    classification: bool = False    # 解决 'AttributeError: ... has no attribute 'classification''
-    # ----------------------------------------------------------------------
+    # --- 框架运行所需的必要属性 ---
+    debug: bool = False             
+    classification: bool = False    
     
     # 核心配置
     model: str = 'lzhmodel'
@@ -44,6 +43,7 @@ class LZHModelConfig(ExperimentConfig, BaseModelConfig, LoggerConfig, DatasetInf
     noise_scale: float = 1.0
     noise_steps: int = 40
     lamda: float = 0.5  # 用于控制扩散损失的权重
-    diffusion_ckpt = "checkpoints/diffusion_lzh/diffusion_lzh.pt"
+    diffusion_ckpt = ""
+    # checkpoints/diffusion_lzh/diffusion_lzh.pt
     
     rounds: int = 3

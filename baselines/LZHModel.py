@@ -260,7 +260,7 @@ class LZHModel(nn.Module):
         # 如果使用了预训练模型，直接进行去噪，不计算训练损失
         if self.use_pretrained_diffusion:
             with torch.no_grad():
-                y_denoised = self.diffusion.p_sample(self.reverse, y_flat, 5, False)
+                y_denoised = self.diffusion.p_sample(self.reverse, y_flat, 60, False)
             self.diffusion_loss = 0.0
             if not hasattr(self, '_print_pretrained_info'):
                 print(f"  [扩散模型] 使用预训练模型进行去噪（参数已冻结，仅推理）")
@@ -294,6 +294,8 @@ class LZHModel(nn.Module):
             x /= stdev
             
         # 2. 扩散模型去噪/增强
+        # from utils.visualize import plot_and_save
+        # plot_and_save(x[0, :, 0], save_path="./debug_visualizations/preDiffusion/weather_before_preDiff_ch0.pdf", title="before preDiffusion | sample0 ch0")
         x = self.diffusion_forward(x)
             
         # 3. 嵌入层

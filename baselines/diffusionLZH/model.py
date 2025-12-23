@@ -1,3 +1,5 @@
+# model.py
+
 import torch
 import torch.nn as nn
 from dataclasses import asdict
@@ -35,16 +37,29 @@ class DiffusionWrapper(nn.Module):
             emb_size=d_model,
         ).to(self.device)
         self.d_model = d_model
+        
+        print(f"[model] Initialized DiffusionWrapper")
+        print(f"[model] Input size: {input_size}, Seq len: {seq_len}, Flat dim: {flat_dim}")
+        print(f"[model] D_model: {d_model}, Device: {self.device}")
 
     def forward(self, x):
         """
         x: (B, L, C) -> flatten -> diffusion 训练
+        关键修复：损失归一化
         """
         b, l, c = x.shape
-        assert l == self.seq_len and c == self.input_size, "输入尺寸与配置不一致"
+        assert l == self.seq_len and c == self.input_size, f"输入尺寸不一致: 期望({self.seq_len}, {self.input_size}), 实际({l}, {c})"
+        
+        # 这里可能是原理的问题？？？？
         x_flat = x.reshape(b, -1).to(self.device)
+        
         out = self.diffusion.training_losses(self.reverse, x_flat, reweight=True)
-        loss = out["loss"].mean()
+        
+        # 关键修复：归一化损失，避免数值过大
+        raw_loss = out["loss"].mean()
+        # 除以序列总维度数进行归一化
+        loss = raw_loss / (l * c)
+        
         return loss, out
 
     @torch.no_grad()
@@ -73,4 +88,3 @@ class DiffusionWrapper(nn.Module):
             "d_model": self.d_model,
             "config": asdict(self.cfg),
         }
-
